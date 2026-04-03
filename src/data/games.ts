@@ -2,7 +2,7 @@ export interface Game {
   title: string;
   desc: string;
   url: string;
-  image: string;
+  image?: string;
   popular?: boolean;
   secret?: boolean;
 }
