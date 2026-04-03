@@ -12,8 +12,17 @@ export default {
         "2xl": "1400px",
       },
     },
+    fontFamily: {
+        display: ['Orbitron', 'sans-serif'],
+        body: ['Inter', 'sans-serif'],
+      },
     extend: {
       colors: {
+        vault: {
+          glow: "hsl(var(--vault-glow))",
+          surface: "hsl(var(--vault-surface))",
+          hover: "hsl(var(--vault-hover))",
+        },
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",
