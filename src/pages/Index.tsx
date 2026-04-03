@@ -1,12 +1,23 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { Search, Gamepad2, Sparkles } from "lucide-react";
 import { games, Game } from "@/data/games";
 import GameCard from "@/components/GameCard";
 import GamePlayer from "@/components/GamePlayer";
 
+interface GameTab {
+  game: Game;
+  id: string;
+  htmlContent: string | null;
+  loading: boolean;
+  error: boolean;
+}
+
+let tabCounter = 0;
+
 const Index = () => {
   const [search, setSearch] = useState("");
-  const [activeGame, setActiveGame] = useState<Game | null>(null);
+  const [openTabs, setOpenTabs] = useState<GameTab[]>([]);
+  const [activeTabId, setActiveTabId] = useState<string>("");
 
   const filteredGames = useMemo(() => {
     if (!search.trim()) return games;
@@ -18,8 +29,92 @@ const Index = () => {
     );
   }, [search]);
 
-  if (activeGame) {
-    return <GamePlayer game={activeGame} onClose={() => setActiveGame(null)} />;
+  const openGame = useCallback((game: Game) => {
+    const id = `tab-${++tabCounter}`;
+    const isHtmlFile = game.url.endsWith(".html");
+
+    const newTab: GameTab = {
+      game,
+      id,
+      htmlContent: null,
+      loading: isHtmlFile,
+      error: false,
+    };
+
+    setOpenTabs((prev) => [...prev, newTab]);
+    setActiveTabId(id);
+
+    if (isHtmlFile) {
+      fetch(game.url)
+        .then((res) => {
+          if (!res.ok) throw new Error("Failed to fetch");
+          return res.text();
+        })
+        .then((html) => {
+          // Inject a <base> tag so relative resources resolve correctly
+          const baseUrl = game.url.substring(0, game.url.lastIndexOf("/") + 1);
+          let processedHtml = html;
+          if (!html.includes("<base")) {
+            processedHtml = html.replace(
+              /<head([^>]*)>/i,
+              `<head$1><base href="${baseUrl}">`
+            );
+            // If no <head> tag, prepend base
+            if (!processedHtml.includes("<base")) {
+              processedHtml = `<base href="${baseUrl}">` + processedHtml;
+            }
+          }
+          setOpenTabs((prev) =>
+            prev.map((t) =>
+              t.id === id ? { ...t, htmlContent: processedHtml, loading: false } : t
+            )
+          );
+        })
+        .catch(() => {
+          // On error, fall back to direct iframe src
+          setOpenTabs((prev) =>
+            prev.map((t) =>
+              t.id === id ? { ...t, loading: false, error: true } : t
+            )
+          );
+        });
+    }
+  }, []);
+
+  const closeTab = useCallback((tabId: string) => {
+    setOpenTabs((prev) => {
+      const newTabs = prev.filter((t) => t.id !== tabId);
+      if (newTabs.length === 0) {
+        setActiveTabId("");
+      } else {
+        setActiveTabId((currentActive) => {
+          if (currentActive === tabId) {
+            const closedIndex = prev.findIndex((t) => t.id === tabId);
+            const newIndex = Math.min(closedIndex, newTabs.length - 1);
+            return newTabs[newIndex].id;
+          }
+          return currentActive;
+        });
+      }
+      return newTabs;
+    });
+  }, []);
+
+  const closeAll = useCallback(() => {
+    setOpenTabs([]);
+    setActiveTabId("");
+  }, []);
+
+  if (openTabs.length > 0 && activeTabId) {
+    return (
+      <GamePlayer
+        tabs={openTabs}
+        activeTabId={activeTabId}
+        onCloseTab={closeTab}
+        onSelectTab={setActiveTabId}
+        onCloseAll={closeAll}
+      />
+    );
   }
 
   return (
@@ -68,7 +163,7 @@ const Index = () => {
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
             {filteredGames.map((game, i) => (
-              <GameCard key={`${game.title}-${i}`} game={game} onPlay={setActiveGame} />
+              <GameCard key={`${game.title}-${i}`} game={game} onPlay={openGame} />
             ))}
           </div>
         )}
