@@ -4,6 +4,7 @@ export interface Game {
   url: string;
   image: string;
   popular?: boolean;
+  secret?: boolean;
 }
 
 export const games: Game[] = [
