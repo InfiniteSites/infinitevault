@@ -1,3 +1,5 @@
+import tictactoeImg from "@/assets/tictactoe.jpg";
+
 export interface Game {
   title: string;
   desc: string;
