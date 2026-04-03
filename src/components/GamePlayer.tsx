@@ -1,6 +1,7 @@
 import { Game } from "@/data/games";
-import { X, Maximize, Minimize, Plus } from "lucide-react";
-import { useState, useEffect, useCallback } from "react";
+import { X, Maximize, Minimize, ArrowLeft } from "lucide-react";
+import { useState, useEffect } from "react";
+import TicTacToe from "@/components/TicTacToe";
 
 interface GameTab {
   game: Game;
@@ -8,6 +9,7 @@ interface GameTab {
   htmlContent: string | null;
   loading: boolean;
   error: boolean;
+  isBuiltIn?: boolean;
 }
 
 interface GamePlayerProps {
@@ -16,9 +18,10 @@ interface GamePlayerProps {
   onCloseTab: (tabId: string) => void;
   onSelectTab: (tabId: string) => void;
   onCloseAll: () => void;
+  onBackToLibrary: () => void;
 }
 
-const GamePlayer = ({ tabs, activeTabId, onCloseTab, onSelectTab, onCloseAll }: GamePlayerProps) => {
+const GamePlayer = ({ tabs, activeTabId, onCloseTab, onSelectTab, onCloseAll, onBackToLibrary }: GamePlayerProps) => {
   const [isFullscreen, setIsFullscreen] = useState(false);
 
   const toggleFullscreen = () => {
@@ -43,6 +46,13 @@ const GamePlayer = ({ tabs, activeTabId, onCloseTab, onSelectTab, onCloseAll }: 
     <div className="fixed inset-0 z-50 bg-background flex flex-col">
       {/* Tab bar */}
       <div className="flex items-center border-b border-border bg-card overflow-x-auto shrink-0">
+        <button
+          onClick={onBackToLibrary}
+          className="p-2 mx-1 rounded-md hover:bg-secondary transition-colors text-muted-foreground hover:text-primary shrink-0"
+          title="Back to library"
+        >
+          <ArrowLeft size={16} />
+        </button>
         <div className="flex items-center flex-1 min-w-0 overflow-x-auto scrollbar-hide">
           {tabs.map((tab) => (
             <div
@@ -83,7 +93,7 @@ const GamePlayer = ({ tabs, activeTabId, onCloseTab, onSelectTab, onCloseAll }: 
         </div>
       </div>
 
-      {/* Game panels - all mounted, only active visible */}
+      {/* Game panels */}
       <div className="flex-1 relative">
         {tabs.map((tab) => (
           <div
@@ -91,7 +101,9 @@ const GamePlayer = ({ tabs, activeTabId, onCloseTab, onSelectTab, onCloseAll }: 
             className="absolute inset-0"
             style={{ display: tab.id === activeTabId ? "block" : "none" }}
           >
-            {tab.loading ? (
+            {tab.isBuiltIn ? (
+              <TicTacToe />
+            ) : tab.loading ? (
               <div className="flex items-center justify-center h-full text-muted-foreground">
                 <div className="text-center">
                   <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-3" />

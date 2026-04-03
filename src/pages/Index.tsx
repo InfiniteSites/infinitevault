@@ -1,5 +1,5 @@
 import { useState, useMemo, useCallback } from "react";
-import { Search, Gamepad2, Sparkles } from "lucide-react";
+import { Search, Gamepad2, Infinity } from "lucide-react";
 import { games, Game } from "@/data/games";
 import GameCard from "@/components/GameCard";
 import GamePlayer from "@/components/GamePlayer";
@@ -10,6 +10,7 @@ interface GameTab {
   htmlContent: string | null;
   loading: boolean;
   error: boolean;
+  isBuiltIn?: boolean;
 }
 
 let tabCounter = 0;
@@ -18,6 +19,7 @@ const Index = () => {
   const [search, setSearch] = useState("");
   const [openTabs, setOpenTabs] = useState<GameTab[]>([]);
   const [activeTabId, setActiveTabId] = useState<string>("");
+  const [showPlayer, setShowPlayer] = useState(false);
 
   const filteredGames = useMemo(() => {
     if (!search.trim()) return games;
@@ -32,26 +34,28 @@ const Index = () => {
   const openGame = useCallback((game: Game) => {
     const id = `tab-${++tabCounter}`;
     const isHtmlFile = game.url.endsWith(".html");
+    const isBuiltIn = game.url === "builtin:tictactoe";
 
     const newTab: GameTab = {
       game,
       id,
       htmlContent: null,
-      loading: isHtmlFile,
+      loading: isHtmlFile && !isBuiltIn,
       error: false,
+      isBuiltIn,
     };
 
     setOpenTabs((prev) => [...prev, newTab]);
     setActiveTabId(id);
+    setShowPlayer(true);
 
-    if (isHtmlFile) {
+    if (isHtmlFile && !isBuiltIn) {
       fetch(game.url)
         .then((res) => {
           if (!res.ok) throw new Error("Failed to fetch");
           return res.text();
         })
         .then((html) => {
-          // Inject a <base> tag so relative resources resolve correctly
           const baseUrl = game.url.substring(0, game.url.lastIndexOf("/") + 1);
           let processedHtml = html;
           if (!html.includes("<base")) {
@@ -59,7 +63,6 @@ const Index = () => {
               /<head([^>]*)>/i,
               `<head$1><base href="${baseUrl}">`
             );
-            // If no <head> tag, prepend base
             if (!processedHtml.includes("<base")) {
               processedHtml = `<base href="${baseUrl}">` + processedHtml;
             }
@@ -71,7 +74,6 @@ const Index = () => {
           );
         })
         .catch(() => {
-          // On error, fall back to direct iframe src
           setOpenTabs((prev) =>
             prev.map((t) =>
               t.id === id ? { ...t, loading: false, error: true } : t
@@ -85,6 +87,7 @@ const Index = () => {
     setOpenTabs((prev) => {
       const newTabs = prev.filter((t) => t.id !== tabId);
       if (newTabs.length === 0) {
+        setShowPlayer(false);
         setActiveTabId("");
       } else {
         setActiveTabId((currentActive) => {
@@ -103,9 +106,15 @@ const Index = () => {
   const closeAll = useCallback(() => {
     setOpenTabs([]);
     setActiveTabId("");
+    setShowPlayer(false);
   }, []);
 
-  if (openTabs.length > 0 && activeTabId) {
+  const backToLibrary = useCallback(() => {
+    setShowPlayer(false);
+  }, []);
+
+  // Show player overlay when games are open and user hasn't gone back to library
+  if (openTabs.length > 0 && activeTabId && showPlayer) {
     return (
       <GamePlayer
         tabs={openTabs}
@@ -113,6 +122,7 @@ const Index = () => {
         onCloseTab={closeTab}
         onSelectTab={setActiveTabId}
         onCloseAll={closeAll}
+        onBackToLibrary={backToLibrary}
       />
     );
   }
@@ -124,7 +134,7 @@ const Index = () => {
         <div className="container mx-auto px-4 py-4 flex items-center justify-between gap-4">
           <div className="flex items-center gap-3 shrink-0">
             <div className="w-9 h-9 rounded-lg bg-primary/10 border border-primary/30 flex items-center justify-center vault-glow">
-              <Sparkles size={18} className="text-primary" />
+              <Infinity size={20} className="text-primary" />
             </div>
             <h1 className="font-display text-lg md:text-xl font-bold text-gradient-gold tracking-wide">
               Infinite's Vault
@@ -145,9 +155,20 @@ const Index = () => {
             />
           </div>
 
-          <div className="hidden md:flex items-center gap-2 text-muted-foreground text-sm shrink-0">
-            <Gamepad2 size={16} />
-            <span>{games.length} games</span>
+          <div className="flex items-center gap-3 shrink-0">
+            {openTabs.length > 0 && (
+              <button
+                onClick={() => setShowPlayer(true)}
+                className="flex items-center gap-2 px-3 py-2 bg-primary/10 border border-primary/30 rounded-lg text-sm text-primary hover:bg-primary/20 transition-colors font-display font-semibold"
+              >
+                <Gamepad2 size={14} />
+                <span>{openTabs.length} open</span>
+              </button>
+            )}
+            <div className="hidden md:flex items-center gap-2 text-muted-foreground text-sm">
+              <Gamepad2 size={16} />
+              <span>{games.length} games</span>
+            </div>
           </div>
         </div>
       </header>
