@@ -365,5 +365,6 @@ export const games: Game[] = [
       { title: "Wordle", desc: "Word guessing puzzle", url: "https://cdn.jsdelivr.net/gh/NoahsAmazingTutoringHelp/Noahs-Calculus-Tutor@master/games/176.html", image: "https://cdn.jsdelivr.net/gh/NoahsAmazingTutoringHelp/Noahs-Calculus-Tutor/images/183.jpg" },
       { title: "Monkey Mart", desc: "Store management tycoon", url: "https://cdn.jsdelivr.net/gh/NoahsAmazingTutoringHelp/Noahs-Calculus-Tutor@master/games/175.html", image: "https://cdn.jsdelivr.net/gh/NoahsAmazingTutoringHelp/Noahs-Calculus-Tutor/images/184.jpg" },
       { title: "Short Life", desc: "Quick racing challenges", url: "https://script.google.com/macros/s/AKfycbwnUyWNTKlCTVcCJY9YkeqN1zU3TMAQbhXLKw2a2nytDcF1Xfr32bCV4zdRzYXvJOIe/exec?game=174.html", image: "https://cdn.jsdelivr.net/gh/NoahsAmazingTutoringHelp/Noahs-Calculus-Tutor/images/185.jpg" },
-      { title: "Five Nights at Epstein", desc: "A secret escape game where you navigate through mysterious locations", url: "https://script.google.com/macros/s/AKfycbw2YH3dPJE1XWPOXBnR4UOidr3vX8fgY0ZIyWj1Bmx9Lcty0e1bfUOYwPJ02lviN2Hb/exec?game=2019.html", secret: true }
+      { title: "Five Nights at Epstein", desc: "A secret escape game where you navigate through mysterious locations", url: "https://script.google.com/macros/s/AKfycbw2YH3dPJE1XWPOXBnR4UOidr3vX8fgY0ZIyWj1Bmx9Lcty0e1bfUOYwPJ02lviN2Hb/exec?game=2019.html", secret: true },
+      { title: "Tic Tac Toe", desc: "Classic Tic Tac Toe — play against AI (easy, medium, hard) or challenge a friend!", url: "builtin:tictactoe", image: "" }
     ];
