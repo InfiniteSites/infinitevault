@@ -7,6 +7,8 @@ import Layout from "./components/Layout";
 import Home from "./pages/Home";
 import Proxies from "./pages/Proxies";
 import DumpPage from "./pages/Dump";
+import Generator from "./pages/Generator";
+import Gambling from "./pages/Gambling";
 import Index from "./pages/Index.tsx";
 import NotFound from "./pages/NotFound.tsx";
 
@@ -23,6 +25,8 @@ const App = () => (
             <Route path="/" element={<Home />} />
             <Route path="/proxies" element={<Proxies />} />
             <Route path="/dump" element={<DumpPage />} />
+            <Route path="/generator" element={<Generator />} />
+            <Route path="/gambling" element={<Gambling />} />
             <Route path="/vault" element={<Index />} />
           </Route>
           <Route path="*" element={<NotFound />} />
