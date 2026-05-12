@@ -321,16 +321,6 @@ const RouletteGame = ({ balance, setBalance, addToLeaderboard }: { balance: numb
     }
   };
 
-  // Recompute payout when won
-  useEffect(() => {
-    if (won === true && result !== null) {
-      setBalance((prev: any) => {
-        // setBalance was already called above; use functional via ref. Simpler: do nothing, payout was applied in spin.
-        return prev;
-      });
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [won]);
 
   const choices: { id: RouletteBet; label: string; color: string }[] = [
     { id: "red", label: "Red", color: "bg-red-600" },
