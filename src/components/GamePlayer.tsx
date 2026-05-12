@@ -1,5 +1,6 @@
 import { Game } from "@/data/games";
-import { X, Maximize, Minimize, ArrowLeft } from "lucide-react";
+import { X, Maximize, Minimize, ArrowLeft, Globe } from "lucide-react";
+import { buildProxyUrl } from "@/lib/admin";
 import { useState, useEffect } from "react";
 import TicTacToe from "@/components/TicTacToe";
 
