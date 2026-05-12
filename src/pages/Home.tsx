@@ -98,23 +98,20 @@ const Home = () => {
       <PasswordModal open={pwOpen} onClose={() => setPwOpen(false)} />
 
       {/* Hero */}
-      <section className="text-center py-16 mb-12 relative">
-        <div className="inline-block mb-4 px-4 py-1.5 rounded-full bg-primary/10 border border-primary/30 text-xs font-display tracking-widest text-primary">
-          UNRESTRICTED ACCESS
+      <section className="text-center py-20 mb-12 relative">
+        <div className="inline-block mb-6 px-4 py-1.5 rounded-full bg-primary/10 border border-primary/30 text-xs font-display tracking-[0.3em] text-primary uppercase">
+          Unrestricted Access
         </div>
-        <h1 className="font-display text-5xl sm:text-7xl md:text-8xl font-black text-gradient-gold mb-4 leading-none drop-shadow-[0_0_30px_hsl(var(--primary)/0.4)]">
-          Infinite Unblocker
+        <h1 className="font-display text-5xl sm:text-7xl md:text-8xl font-black text-gradient-cosmic mb-6 leading-[0.95] tracking-tight drop-shadow-[0_0_40px_hsl(var(--primary)/0.5)]">
+          INFINITE<br className="sm:hidden" /> UNBLOCKER
         </h1>
-        <p className="font-display text-xl sm:text-2xl text-muted-foreground tracking-[0.3em] font-light">
-          V<span className="text-primary font-bold">4</span>
-        </p>
-        {!admin && (
-          <p className="mt-6 text-xs text-muted-foreground/60 font-mono">
-            Hint: there's a way in...
-          </p>
-        )}
+        <div className="inline-flex items-center gap-3">
+          <span className="h-px w-12 bg-gradient-to-r from-transparent to-accent" />
+          <p className="font-display text-xl text-accent tracking-[0.5em] font-bold">V4</p>
+          <span className="h-px w-12 bg-gradient-to-l from-transparent to-accent" />
+        </div>
         {admin && (
-          <div className="mt-6 inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/10 border border-primary/40 text-xs font-display text-primary">
+          <div className="mt-8 inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/10 border border-primary/40 text-xs font-display text-primary">
             <ShieldCheck size={12} /> Admin mode active
           </div>
         )}
