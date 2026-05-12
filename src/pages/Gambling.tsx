@@ -302,13 +302,13 @@ const RouletteGame = ({ balance, setBalance, addToLeaderboard }: { balance: numb
         setSpinning(false);
         const w = matches(choice!, final);
         setWon(w);
-        if (w) setBalance((b => b)(balance - bet) + bet * 2);
-        addToLeaderboard();
-      }
-    }, 70);
-  };
+          if (w) setBalance(balance + bet); // refund + winnings (net +bet since bet was already deducted)
+          addToLeaderboard();
+        }
+      }, 70);
+    };
 
-  const matches = (c: RouletteBet, n: number) => {
+    const matches = (c: RouletteBet, n: number) => {
     if (n === 0) return false;
     switch (c) {
       case "red": return isRed(n);
