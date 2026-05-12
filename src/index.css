@@ -88,9 +88,35 @@
   }
 
   .text-gradient-gold {
-    background: linear-gradient(135deg, hsl(42 78% 65%), hsl(42 78% 45%));
+    background: linear-gradient(135deg, hsl(42 90% 70%), hsl(42 78% 45%));
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
   }
+
+  .bg-grid {
+    background-image:
+      linear-gradient(hsl(var(--primary) / 1) 1px, transparent 1px),
+      linear-gradient(90deg, hsl(var(--primary) / 1) 1px, transparent 1px);
+    background-size: 40px 40px;
+  }
+
+  .animate-pulse-slow {
+    animation: pulse-slow 8s ease-in-out infinite;
+  }
+
+  .animate-shake {
+    animation: shake 0.4s ease-in-out;
+  }
+}
+
+@keyframes pulse-slow {
+  0%, 100% { opacity: 0.6; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.1); }
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-8px); }
+  75% { transform: translateX(8px); }
 }
