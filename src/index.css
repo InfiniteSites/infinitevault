@@ -149,6 +149,15 @@
   .animate-drift {
     animation: drift 120s linear infinite;
   }
+
+  .animate-page-in {
+    animation: page-in 0.45s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+}
+
+@keyframes page-in {
+  0% { opacity: 0; transform: translateY(8px) scale(0.995); filter: blur(4px); }
+  100% { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); }
 }
 
 @keyframes pulse-slow {
