@@ -14,13 +14,197 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      categories: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+        }
+        Relationships: []
+      }
+      dump_links: {
+        Row: {
+          created_at: string
+          dump_id: string
+          id: string
+          url: string
+          visits: number
+        }
+        Insert: {
+          created_at?: string
+          dump_id: string
+          id?: string
+          url: string
+          visits?: number
+        }
+        Update: {
+          created_at?: string
+          dump_id?: string
+          id?: string
+          url?: string
+          visits?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dump_links_dump_id_fkey"
+            columns: ["dump_id"]
+            isOneToOne: false
+            referencedRelation: "dumps"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      dumps: {
+        Row: {
+          created_at: string
+          id: string
+          title: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          title: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          title?: string
+        }
+        Relationships: []
+      }
+      leaderboard: {
+        Row: {
+          balance: number
+          id: string
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          balance?: number
+          id?: string
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          balance?: number
+          id?: string
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      links: {
+        Row: {
+          category_id: string | null
+          created_at: string
+          id: string
+          name: string
+          url: string
+          visits: number
+        }
+        Insert: {
+          category_id?: string | null
+          created_at?: string
+          id?: string
+          name: string
+          url: string
+          visits?: number
+        }
+        Update: {
+          category_id?: string | null
+          created_at?: string
+          id?: string
+          name?: string
+          url?: string
+          visits?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "links_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      proxies: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          url: string
+          visits: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          url: string
+          visits?: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          url?: string
+          visits?: number
+        }
+        Relationships: []
+      }
+      site_stats: {
+        Row: {
+          id: number
+          total_visits: number
+        }
+        Insert: {
+          id?: number
+          total_visits?: number
+        }
+        Update: {
+          id?: number
+          total_visits?: number
+        }
+        Relationships: []
+      }
+      wildcards: {
+        Row: {
+          created_at: string
+          id: string
+          pattern: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          pattern: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          pattern?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      bump_link_visits: {
+        Args: { row_id: string; table_name: string }
+        Returns: undefined
+      }
+      bump_site_visits: { Args: never; Returns: number }
     }
     Enums: {
       [_ in never]: never
