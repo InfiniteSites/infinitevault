@@ -9,6 +9,7 @@ import Proxies from "./pages/Proxies";
 import DumpPage from "./pages/Dump";
 import Generator from "./pages/Generator";
 import Gambling from "./pages/Gambling";
+import AdminPanel from "./pages/AdminPanel";
 import Index from "./pages/Index.tsx";
 import NotFound from "./pages/NotFound.tsx";
 
@@ -28,6 +29,7 @@ const App = () => (
             <Route path="/generator" element={<Generator />} />
             <Route path="/gambling" element={<Gambling />} />
             <Route path="/vault" element={<Index />} />
+            <Route path="/admin" element={<AdminPanel />} />
           </Route>
           <Route path="*" element={<NotFound />} />
         </Routes>

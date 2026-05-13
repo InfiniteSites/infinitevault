@@ -1,7 +1,8 @@
 import { NavLink, Outlet, useLocation } from "react-router-dom";
-import { Infinity, Home, Globe, Database, Vault, Lock, Unlock, Shuffle, Dice5 } from "lucide-react";
+import { Infinity, Home, Globe, Database, Vault, ShieldCheck, Shuffle, Dice5, Settings } from "lucide-react";
 import { useEffect, useState } from "react";
 import { isAdmin, setAdmin } from "@/lib/admin";
+import { api } from "@/lib/api";
 import SpaceBackground from "@/components/SpaceBackground";
 
 const navItems = [
@@ -11,6 +12,7 @@ const navItems = [
   { to: "/generator", label: "Generator", icon: Shuffle },
   { to: "/gambling", label: "Gambling", icon: Dice5 },
   { to: "/vault", label: "Vault", icon: Vault },
+  { to: "/admin", label: "Admin", icon: Settings, adminOnly: true },
 ];
 
 const Layout = () => {
@@ -27,8 +29,12 @@ const Layout = () => {
     };
   }, []);
 
-  const isVault = location.pathname.startsWith("/vault");
-  if (isVault) return <Outlet />;
+  // Bump site visits once per session
+  useEffect(() => {
+    if (sessionStorage.getItem("iv_visited")) return;
+    sessionStorage.setItem("iv_visited", "1");
+    api.bumpSite().catch(() => {});
+  }, []);
 
   return (
     <div className="min-h-screen relative">
@@ -47,7 +53,7 @@ const Layout = () => {
           </NavLink>
 
           <nav className="flex items-center gap-0.5 bg-secondary/30 border border-border/40 rounded-xl p-1 backdrop-blur overflow-x-auto">
-            {navItems.map(({ to, label, icon: Icon, end }) => (
+            {navItems.filter((n) => !n.adminOnly || admin).map(({ to, label, icon: Icon, end }) => (
               <NavLink
                 key={to}
                 to={to}
@@ -66,24 +72,20 @@ const Layout = () => {
             ))}
           </nav>
 
-          <button
-            onClick={() => {
-              if (admin && confirm("Lock admin mode?")) setAdmin(false);
-            }}
-            className={`shrink-0 flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-display font-bold border transition-all ${
-              admin
-                ? "bg-primary/15 border-primary/50 text-primary"
-                : "bg-secondary/30 border-border/40 text-muted-foreground"
-            }`}
-            title={admin ? "Click to lock" : "Locked"}
-          >
-            {admin ? <Unlock size={12} /> : <Lock size={12} />}
-            <span className="hidden md:inline">{admin ? "ADMIN" : "LOCKED"}</span>
-          </button>
+          {admin ? (
+            <button
+              onClick={() => { if (confirm("Lock admin mode?")) setAdmin(false); }}
+              className="shrink-0 flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-display font-bold border bg-primary/15 border-primary/50 text-primary hover:bg-primary/25 transition"
+              title="Click to lock"
+            >
+              <ShieldCheck size={12} />
+              <span className="hidden md:inline">ADMIN</span>
+            </button>
+          ) : <div className="w-2" />}
         </div>
       </header>
 
-      <main className="relative z-10">
+      <main key={location.pathname} className="relative z-10 animate-page-in">
         <Outlet />
       </main>
     </div>
