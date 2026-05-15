@@ -10,6 +10,8 @@ import DumpPage from "./pages/Dump";
 import Generator from "./pages/Generator";
 import Gambling from "./pages/Gambling";
 import AdminPanel from "./pages/AdminPanel";
+import Chooser from "./pages/Chooser";
+import Chat from "./pages/Chat";
 import Index from "./pages/Index.tsx";
 import NotFound from "./pages/NotFound.tsx";
 
@@ -24,11 +26,13 @@ const App = () => (
         <Routes>
           <Route element={<Layout />}>
             <Route path="/" element={<Home />} />
+            <Route path="/chooser" element={<Chooser />} />
             <Route path="/proxies" element={<Proxies />} />
             <Route path="/dump" element={<DumpPage />} />
             <Route path="/generator" element={<Generator />} />
             <Route path="/gambling" element={<Gambling />} />
             <Route path="/vault" element={<Index />} />
+            <Route path="/chat" element={<Chat />} />
             <Route path="/admin" element={<AdminPanel />} />
           </Route>
           <Route path="*" element={<NotFound />} />

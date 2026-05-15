@@ -1,5 +1,5 @@
 import { NavLink, Outlet, useLocation } from "react-router-dom";
-import { Infinity, Home, Globe, Database, Vault, ShieldCheck, Shuffle, Dice5, Settings } from "lucide-react";
+import { Infinity, Home, Globe, Database, Vault, ShieldCheck, Shuffle, Dice5, Settings, ListChecks, Sparkles } from "lucide-react";
 import { useEffect, useState } from "react";
 import { isAdmin, setAdmin } from "@/lib/admin";
 import { api } from "@/lib/api";
@@ -7,11 +7,13 @@ import SpaceBackground from "@/components/SpaceBackground";
 
 const navItems = [
   { to: "/", label: "Home", icon: Home, end: true },
+  { to: "/chooser", label: "Chooser", icon: ListChecks },
   { to: "/proxies", label: "More Proxies", icon: Globe },
   { to: "/dump", label: "Dump", icon: Database },
   { to: "/generator", label: "Generator", icon: Shuffle },
   { to: "/gambling", label: "Gambling", icon: Dice5 },
   { to: "/vault", label: "Vault", icon: Vault },
+  { to: "/chat", label: "AI", icon: Sparkles },
   { to: "/admin", label: "Admin", icon: Settings, adminOnly: true },
 ];
 
@@ -34,6 +36,22 @@ const Layout = () => {
     if (sessionStorage.getItem("iv_visited")) return;
     sessionStorage.setItem("iv_visited", "1");
     api.bumpSite().catch(() => {});
+  }, []);
+
+  // Trigger a link-status recheck every 20 minutes (and once on first load per tab)
+  useEffect(() => {
+    const KEY = "iv_last_recheck";
+    const TWENTY_MIN = 20 * 60 * 1000;
+    const tick = () => {
+      const last = +(localStorage.getItem(KEY) ?? 0);
+      if (Date.now() - last > TWENTY_MIN) {
+        localStorage.setItem(KEY, String(Date.now()));
+        api.checkAll().catch(() => {});
+      }
+    };
+    tick();
+    const id = setInterval(tick, 60 * 1000);
+    return () => clearInterval(id);
   }, []);
 
   return (
