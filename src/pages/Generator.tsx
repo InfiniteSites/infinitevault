@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
-import { Shuffle, ExternalLink, Globe, Sparkles, Plus, Trash2, Wand2, Copy } from "lucide-react";
+import { Shuffle, ExternalLink, Sparkles, Plus, Trash2, Wand2, Copy } from "lucide-react";
 import { isAdmin } from "@/lib/admin";
-import { api, applyWildcard, buildProxyUrl, Wildcard } from "@/lib/api";
+import { api, applyWildcard, Wildcard } from "@/lib/api";
 
-interface PoolPick { name: string; url: string; source: string; type: string }
+interface PoolPick { name: string; url: string; source: string; type: string; status?: "working" | "down" | "checking" }
 
 const Generator = () => {
   const [admin, setAdminState] = useState(isAdmin());
@@ -45,8 +45,12 @@ const Generator = () => {
       setPick(pool[Math.floor(Math.random() * pool.length)]);
       if (++ticks > 18) {
         clearInterval(id);
-        setPick(pool[Math.floor(Math.random() * pool.length)]);
+        const final = { ...pool[Math.floor(Math.random() * pool.length)], status: "checking" as const };
+        setPick(final);
         setSpinning(false);
+        api.checkOne(final.url).then((status) => {
+          setPick((p) => (p && p.url === final.url ? { ...p, status } : p));
+        });
       }
     }, 60);
   };
