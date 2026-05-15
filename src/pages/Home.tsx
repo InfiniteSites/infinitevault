@@ -1,8 +1,30 @@
 import { useEffect, useRef, useState } from "react";
 import { Plus, Trash2, ExternalLink, FolderPlus, ShieldCheck } from "lucide-react";
-import { isAdmin, buildProxyUrl } from "@/lib/admin";
+import { isAdmin } from "@/lib/admin";
 import { api, Category, LinkRow } from "@/lib/api";
+import { BLOCKERS } from "@/lib/blockers";
 import PasswordModal from "@/components/PasswordModal";
+
+const StatusDot = ({ s }: { s: string | null }) => (
+  <span title={s ?? "unknown"} className={`inline-block w-2 h-2 rounded-full ${s === "working" ? "bg-emerald-400 shadow-[0_0_6px_rgba(52,211,153,0.8)]" : s === "down" ? "bg-rose-500" : "bg-muted-foreground/40"}`} />
+);
+
+const BlockerPicker = ({ value, onChange }: { value: string[]; onChange: (v: string[]) => void }) => {
+  const toggle = (b: string) => onChange(value.includes(b) ? value.filter((x) => x !== b) : [...value, b]);
+  return (
+    <div className="flex flex-wrap gap-1">
+      {BLOCKERS.map((b) => {
+        const on = value.includes(b);
+        return (
+          <button key={b} type="button" onClick={() => toggle(b)}
+            className={`px-2 py-1 rounded text-[10px] font-display font-bold uppercase tracking-wider border ${
+              on ? "bg-primary text-primary-foreground border-transparent" : "bg-secondary/60 border-border/60 text-muted-foreground hover:text-foreground"
+            }`}>{b}</button>
+        );
+      })}
+    </div>
+  );
+};
 
 const Home = () => {
   const [admin, setAdminState] = useState(isAdmin());
@@ -10,9 +32,10 @@ const Home = () => {
   const [categories, setCategories] = useState<Category[]>([]);
   const [links, setLinks] = useState<LinkRow[]>([]);
   const [addingTo, setAddingTo] = useState<string | null>(null);
-  const [newLink, setNewLink] = useState({ name: "", url: "" });
+  const [newLink, setNewLink] = useState<{ name: string; url: string; blockers: string[] }>({ name: "", url: "", blockers: [] });
   const [newCat, setNewCat] = useState("");
   const [showNewCat, setShowNewCat] = useState(false);
+  const [editing, setEditing] = useState<string | null>(null);
 
   const sequence = useRef<number[]>([]);
 
@@ -29,7 +52,6 @@ const Home = () => {
     return () => window.removeEventListener("admin-changed", h);
   }, []);
 
-  // 8 four times → password
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       const t = e.target as HTMLElement;
@@ -38,10 +60,7 @@ const Home = () => {
       sequence.current.push(Date.now());
       const recent = sequence.current.filter((x) => Date.now() - x < 2000);
       sequence.current = recent;
-      if (recent.length >= 4) {
-        sequence.current = [];
-        setPwOpen(true);
-      }
+      if (recent.length >= 4) { sequence.current = []; setPwOpen(true); }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
@@ -49,8 +68,8 @@ const Home = () => {
 
   const addLink = async (catId: string) => {
     if (!newLink.name.trim() || !newLink.url.trim()) return;
-    await api.addLink(newLink.name.trim(), newLink.url.trim(), catId);
-    setNewLink({ name: "", url: "" });
+    await api.addLink(newLink.name.trim(), newLink.url.trim(), catId, newLink.blockers);
+    setNewLink({ name: "", url: "", blockers: [] });
     setAddingTo(null);
     load();
   };
@@ -64,10 +83,8 @@ const Home = () => {
     if (!confirm("Delete this category and all its links?")) return;
     await api.deleteCategory(id); load();
   };
-  const open = async (l: LinkRow, proxy: boolean) => {
-    api.bumpLink("links", l.id).catch(() => {});
-    window.open(proxy ? buildProxyUrl(l.url) : l.url, "_blank", "noopener");
-  };
+  const open = (l: LinkRow) => { api.bumpLink("links", l.id).catch(() => {}); window.open(l.url, "_blank", "noopener"); };
+  const saveBlockers = async (id: string, blockers: string[]) => { await api.updateLinkBlockers(id, blockers); setEditing(null); load(); };
 
   return (
     <div className="container mx-auto px-4 py-12">
@@ -101,16 +118,12 @@ const Home = () => {
                 <h2 className="font-display text-2xl font-bold text-gradient-gold">{cat.name}</h2>
                 {admin && (
                   <div className="flex items-center gap-2">
-                    <button
-                      onClick={() => setAddingTo(addingTo === cat.id ? null : cat.id)}
-                      className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-display font-semibold rounded-lg bg-primary/10 border border-primary/30 text-primary hover:bg-primary/20 transition"
-                    >
+                    <button onClick={() => setAddingTo(addingTo === cat.id ? null : cat.id)}
+                      className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-display font-semibold rounded-lg bg-primary/10 border border-primary/30 text-primary hover:bg-primary/20 transition">
                       <Plus size={12} /> Add Link
                     </button>
-                    <button
-                      onClick={() => removeCategory(cat.id)}
-                      className="p-1.5 rounded-lg text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition"
-                    >
+                    <button onClick={() => removeCategory(cat.id)}
+                      className="p-1.5 rounded-lg text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition">
                       <Trash2 size={14} />
                     </button>
                   </div>
@@ -118,12 +131,18 @@ const Home = () => {
               </div>
 
               {admin && addingTo === cat.id && (
-                <div className="mb-4 p-4 bg-secondary/40 border border-border/60 rounded-xl flex flex-col sm:flex-row gap-2">
-                  <input placeholder="Name" value={newLink.name} onChange={(e) => setNewLink({ ...newLink, name: e.target.value })}
-                    className="flex-1 px-3 py-2 bg-background border border-border rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-primary" />
-                  <input placeholder="https://..." value={newLink.url} onChange={(e) => setNewLink({ ...newLink, url: e.target.value })}
-                    className="flex-[2] px-3 py-2 bg-background border border-border rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-primary" />
-                  <button onClick={() => addLink(cat.id)} className="px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-display font-semibold">Save</button>
+                <div className="mb-4 p-4 bg-secondary/40 border border-border/60 rounded-xl space-y-2">
+                  <div className="flex flex-col sm:flex-row gap-2">
+                    <input placeholder="Name" value={newLink.name} onChange={(e) => setNewLink({ ...newLink, name: e.target.value })}
+                      className="flex-1 px-3 py-2 bg-background border border-border rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-primary" />
+                    <input placeholder="https://..." value={newLink.url} onChange={(e) => setNewLink({ ...newLink, url: e.target.value })}
+                      className="flex-[2] px-3 py-2 bg-background border border-border rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-primary" />
+                    <button onClick={() => addLink(cat.id)} className="px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-display font-semibold">Save</button>
+                  </div>
+                  <div>
+                    <div className="text-[10px] uppercase tracking-widest text-muted-foreground mb-1">Bypasses</div>
+                    <BlockerPicker value={newLink.blockers} onChange={(v) => setNewLink({ ...newLink, blockers: v })} />
+                  </div>
                 </div>
               )}
 
@@ -132,22 +151,34 @@ const Home = () => {
               ) : (
                 <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
                   {catLinks.map((l) => (
-                    <div key={l.id} className="group flex items-center justify-between gap-2 p-3 bg-secondary/40 border border-border/60 rounded-lg hover:border-primary/50 hover:bg-secondary transition-all">
-                      <div className="min-w-0 flex-1">
-                        <div className="font-display text-sm font-semibold truncate">{l.name}</div>
-                        <div className="text-[10px] text-muted-foreground truncate font-mono">{l.url}</div>
-                      </div>
-                      <div className="flex items-center gap-1 shrink-0">
-                        <button onClick={() => open(l, false)} title="Open direct" className="p-1.5 rounded-md text-muted-foreground hover:bg-primary/10 hover:text-primary transition">
-                          <ExternalLink size={13} />
-                        </button>
-                        <button onClick={() => open(l, true)} title="Proxy" className="px-2 py-1.5 rounded-md text-[10px] font-display font-bold bg-accent/20 text-accent hover:bg-accent/30 transition">PROXY</button>
-                        {admin && (
-                          <button onClick={() => removeLink(l.id)} className="p-1.5 rounded-md text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition opacity-0 group-hover:opacity-100">
-                            <Trash2 size={12} />
+                    <div key={l.id} className="group flex flex-col gap-1 p-3 bg-secondary/40 border border-border/60 rounded-lg hover:border-primary/50 hover:bg-secondary transition-all">
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="min-w-0 flex-1 flex items-center gap-2">
+                          <StatusDot s={l.last_status} />
+                          <div className="min-w-0">
+                            <div className="font-display text-sm font-semibold truncate">{l.name}</div>
+                            <div className="text-[10px] text-muted-foreground truncate font-mono">{l.url}</div>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-1 shrink-0">
+                          <button onClick={() => open(l)} title="Open" className="p-1.5 rounded-md text-muted-foreground hover:bg-primary/10 hover:text-primary transition">
+                            <ExternalLink size={13} />
                           </button>
-                        )}
+                          {admin && (
+                            <>
+                              <button onClick={() => setEditing(editing === l.id ? null : l.id)} className="px-1.5 py-0.5 rounded text-[9px] font-display font-bold bg-secondary text-muted-foreground hover:text-foreground">TAGS</button>
+                              <button onClick={() => removeLink(l.id)} className="p-1.5 rounded-md text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition opacity-0 group-hover:opacity-100">
+                                <Trash2 size={12} />
+                              </button>
+                            </>
+                          )}
+                        </div>
                       </div>
+                      {admin && editing === l.id && (
+                        <div className="mt-2 pt-2 border-t border-border/40">
+                          <BlockerPicker value={l.blockers ?? []} onChange={(v) => saveBlockers(l.id, v)} />
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>
