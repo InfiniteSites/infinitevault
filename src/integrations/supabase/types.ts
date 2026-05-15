@@ -105,25 +105,34 @@ export type Database = {
       }
       links: {
         Row: {
+          blockers: string[]
           category_id: string | null
           created_at: string
           id: string
+          last_checked: string | null
+          last_status: string | null
           name: string
           url: string
           visits: number
         }
         Insert: {
+          blockers?: string[]
           category_id?: string | null
           created_at?: string
           id?: string
+          last_checked?: string | null
+          last_status?: string | null
           name: string
           url: string
           visits?: number
         }
         Update: {
+          blockers?: string[]
           category_id?: string | null
           created_at?: string
           id?: string
+          last_checked?: string | null
+          last_status?: string | null
           name?: string
           url?: string
           visits?: number
@@ -140,22 +149,31 @@ export type Database = {
       }
       proxies: {
         Row: {
+          blockers: string[]
           created_at: string
           id: string
+          last_checked: string | null
+          last_status: string | null
           name: string
           url: string
           visits: number
         }
         Insert: {
+          blockers?: string[]
           created_at?: string
           id?: string
+          last_checked?: string | null
+          last_status?: string | null
           name: string
           url: string
           visits?: number
         }
         Update: {
+          blockers?: string[]
           created_at?: string
           id?: string
+          last_checked?: string | null
+          last_status?: string | null
           name?: string
           url?: string
           visits?: number
