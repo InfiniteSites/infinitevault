@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Plus, Trash2, ExternalLink, Database, ChevronDown, ChevronRight } from "lucide-react";
-import { isAdmin, buildProxyUrl } from "@/lib/admin";
+import { isAdmin } from "@/lib/admin";
 import { api, DumpRow, DumpLinkRow } from "@/lib/api";
 
 const extractLinks = (text: string): string[] =>
@@ -94,7 +94,6 @@ const DumpPage = () => {
                       <button onClick={() => { api.bumpLink("dump_links", l.id); window.open(l.url, "_blank", "noopener"); }} className="p-1 rounded text-muted-foreground hover:text-primary" title="Open">
                         <ExternalLink size={12} />
                       </button>
-                      <button onClick={() => { api.bumpLink("dump_links", l.id); window.open(buildProxyUrl(l.url), "_blank", "noopener"); }} className="px-1.5 py-0.5 rounded text-[9px] font-display font-bold bg-accent/20 text-accent hover:bg-accent/30">PROXY</button>
                     </div>
                   ))}
                 </div>

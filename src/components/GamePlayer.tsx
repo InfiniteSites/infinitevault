@@ -1,6 +1,5 @@
 import { Game } from "@/data/games";
-import { X, Maximize, Minimize, ArrowLeft, Globe } from "lucide-react";
-import { buildProxyUrl } from "@/lib/admin";
+import { X, Maximize, Minimize, ArrowLeft } from "lucide-react";
 import { useState, useEffect } from "react";
 import TicTacToe from "@/components/TicTacToe";
 
@@ -79,15 +78,6 @@ const GamePlayer = ({ tabs, activeTabId, onCloseTab, onSelectTab, onCloseAll, on
           ))}
         </div>
         <div className="flex items-center gap-1 px-2 shrink-0">
-          {activeTab && !activeTab.isBuiltIn && (
-            <button
-              onClick={() => window.open(buildProxyUrl(activeTab.game.url), "_blank", "noopener")}
-              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-display font-bold bg-accent/20 text-accent hover:bg-accent/30 transition-colors"
-              title="Open this game through a proxy"
-            >
-              <Globe size={12} /> Proxy
-            </button>
-          )}
           <button
             onClick={toggleFullscreen}
             className="p-2 rounded-md hover:bg-secondary transition-colors text-muted-foreground hover:text-foreground"
