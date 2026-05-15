@@ -108,18 +108,16 @@ const Generator = () => {
               <div className={`border border-primary/40 rounded-xl p-4 ${spinning ? "animate-pulse" : ""}`}>
                 <div className="flex items-center gap-2 mb-2">
                   <span className="px-2 py-0.5 rounded-md text-[10px] font-display font-bold uppercase tracking-widest bg-accent/20 text-accent">{pick.type}</span>
-                  <span className="text-xs text-muted-foreground truncate">{pick.source}</span>
+                  <span className="text-xs text-muted-foreground truncate flex-1">{pick.source}</span>
+                  {pick.status === "checking" && <span className="text-[10px] text-muted-foreground">checking...</span>}
+                  {pick.status === "working" && <span className="inline-flex items-center gap-1 text-[10px] text-emerald-400 font-display font-bold uppercase"><span className="w-1.5 h-1.5 rounded-full bg-emerald-400" /> Working</span>}
+                  {pick.status === "down" && <span className="inline-flex items-center gap-1 text-[10px] text-rose-400 font-display font-bold uppercase"><span className="w-1.5 h-1.5 rounded-full bg-rose-500" /> Down</span>}
                 </div>
                 <div className="font-display text-lg font-bold text-gradient-cosmic mb-1 break-words">{pick.name}</div>
                 <div className="text-[10px] text-muted-foreground font-mono break-all mb-3">{pick.url}</div>
-                <div className="flex gap-2">
-                  <button onClick={() => window.open(pick.url, "_blank", "noopener")} className="flex-1 flex items-center justify-center gap-1 py-2 bg-primary text-primary-foreground rounded text-xs font-display font-bold uppercase">
-                    <ExternalLink size={12} /> Open
-                  </button>
-                  <button onClick={() => window.open(buildProxyUrl(pick.url), "_blank", "noopener")} className="flex-1 flex items-center justify-center gap-1 py-2 bg-accent text-accent-foreground rounded text-xs font-display font-bold uppercase">
-                    <Globe size={12} /> Proxy
-                  </button>
-                </div>
+                <button onClick={() => window.open(pick.url, "_blank", "noopener")} className="w-full flex items-center justify-center gap-1 py-2 bg-primary text-primary-foreground rounded text-xs font-display font-bold uppercase">
+                  <ExternalLink size={12} /> Open
+                </button>
               </div>
             ) : (
               <p className="text-center text-xs text-muted-foreground italic py-8">Click Generate to roll.</p>
