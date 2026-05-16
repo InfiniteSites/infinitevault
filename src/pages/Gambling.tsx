@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Dice5, Bomb, TrendingUp, RotateCcw, Trophy, Coins, Gem, Drumstick } from "lucide-react";
+import { Dice5, Bomb, TrendingUp, RotateCcw, Trophy, Coins, Gem, Drumstick, Circle } from "lucide-react";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
 import { api, LeaderEntry } from "@/lib/api";
 
