@@ -49,6 +49,24 @@ export const api = {
 
   async getDumps() { return fetchAll<DumpRow>("dumps"); },
   async getDumpLinks() { return fetchAll<DumpLinkRow>("dump_links"); },
+  async getLinksForDump(dumpId: string) {
+    const PAGE = 1000; let from = 0; const all: DumpLinkRow[] = [];
+    while (true) {
+      const { data, error } = await supabase.from("dump_links").select("*").eq("dump_id", dumpId).order("created_at").range(from, from + PAGE - 1);
+      if (error || !data) break;
+      all.push(...(data as DumpLinkRow[]));
+      if (data.length < PAGE) break;
+      from += PAGE;
+    }
+    return all;
+  },
+  async getDumpCounts() {
+    // Returns map of dump_id -> count via grouped query
+    const { data } = await supabase.from("dump_links").select("dump_id");
+    const m: Record<string, number> = {};
+    (data ?? []).forEach((r: any) => { m[r.dump_id] = (m[r.dump_id] ?? 0) + 1; });
+    return m;
+  },
   async addDump(title: string, urls: string[]) {
     const { data } = await supabase.from("dumps").insert({ title }).select().single();
     if (data && urls.length) {
