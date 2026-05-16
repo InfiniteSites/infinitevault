@@ -7,6 +7,7 @@ export type DumpRow = { id: string; title: string; created_at: string };
 export type DumpLinkRow = { id: string; dump_id: string; url: string; visits: number; created_at: string };
 export type Wildcard = { id: string; pattern: string; created_at: string };
 export type LeaderEntry = { id: string; name: string; balance: number; updated_at: string };
+export type Announcement = { id: string; author: string; message: string; created_at: string };
 
 // Fetch all rows from a table by paginating past the 1000-row default
 async function fetchAll<T>(table: string, order = "created_at"): Promise<T[]> {
