@@ -41,6 +41,17 @@ const Layout = () => {
     api.bumpSite().catch(() => {});
   }, []);
 
+  // Apply tab cloak from settings on load + when settings change
+  useEffect(() => {
+    const apply = () => {
+      const s = getSettings();
+      if (s.cloakTitle || s.cloakFavicon) applyTabCloak({ title: s.cloakTitle, favicon: s.cloakFavicon });
+    };
+    apply();
+    window.addEventListener("iv-settings", apply);
+    return () => window.removeEventListener("iv-settings", apply);
+  }, []);
+
   // Trigger a link-status recheck every 20 minutes (and once on first load per tab)
   useEffect(() => {
     const KEY = "iv_last_recheck";
