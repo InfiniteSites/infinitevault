@@ -91,6 +91,8 @@ const CrashGame = ({ balance, setBalance }: { balance: number; setBalance: (n: n
   const [active, setActive] = useState(false);
   const [cashedAt, setCashedAt] = useState<number | null>(null);
   const [crashed, setCrashed] = useState(false);
+  const [history, setHistory] = useState<number[]>([]);
+  const [pastRounds, setPastRounds] = useState<number[]>([]);
   const tick = useRef<number | null>(null);
 
   const rollCrash = () => {
@@ -102,14 +104,19 @@ const CrashGame = ({ balance, setBalance }: { balance: number; setBalance: (n: n
   const start = () => {
     if (bet <= 0 || bet > balance) return;
     setBalance(balance - bet);
-    setCrashAt(rollCrash()); setMulti(1); setActive(true); setCrashed(false); setCashedAt(null);
+    setCrashAt(rollCrash()); setMulti(1); setActive(true); setCrashed(false); setCashedAt(null); setHistory([1]);
   };
   useEffect(() => {
     if (!active) return;
     tick.current = window.setInterval(() => {
       setMulti((m) => {
-        const next = +(m + Math.max(0.01, m * 0.018)).toFixed(2);
-        if (next >= crashAt) { setActive(false); setCrashed(true); return crashAt; }
+        const next = +(m + Math.max(0.01, m * 0.022)).toFixed(2);
+        if (next >= crashAt) {
+          setActive(false); setCrashed(true);
+          setPastRounds((p) => [crashAt, ...p].slice(0, 10));
+          return crashAt;
+        }
+        setHistory((h) => [...h, next].slice(-80));
         return next;
       });
     }, 80);
@@ -119,16 +126,49 @@ const CrashGame = ({ balance, setBalance }: { balance: number; setBalance: (n: n
     if (!active) return;
     setBalance(balance + Math.floor(bet * multi));
     setCashedAt(multi); setActive(false);
+    setPastRounds((p) => [crashAt, ...p].slice(0, 10));
   };
+
+  // Build SVG path of the multiplier curve
+  const W = 280, H = 110;
+  const maxY = Math.max(2, ...history);
+  const points = history.map((v, i) => {
+    const x = (i / Math.max(1, history.length - 1)) * W;
+    const y = H - ((v - 1) / (maxY - 1 || 1)) * (H - 8) - 4;
+    return `${x.toFixed(1)},${y.toFixed(1)}`;
+  }).join(" ");
 
   return (
     <div className="card-shine border border-border/60 rounded-2xl p-5">
       <div className="flex items-center gap-2 mb-4"><TrendingUp className="text-accent" size={20} /><h3 className="font-display font-black text-lg uppercase tracking-wider">Crash</h3></div>
-      <div className={`relative h-40 rounded-xl border border-border/60 mb-4 flex items-center justify-center overflow-hidden ${crashed ? "bg-destructive/10" : cashedAt ? "bg-accent/10" : "bg-secondary/30"}`}>
-        <div className={`relative font-display font-black text-5xl ${crashed ? "text-destructive" : cashedAt ? "text-accent" : "text-gradient-cosmic"}`}>{multi.toFixed(2)}x</div>
-        {crashed && <div className="absolute bottom-2 text-xs font-display font-bold uppercase text-destructive">Crashed</div>}
-        {cashedAt && <div className="absolute bottom-2 text-xs font-display font-bold uppercase text-accent">Cashed @ {cashedAt}x</div>}
+      <div className={`relative rounded-xl border border-border/60 mb-3 overflow-hidden ${crashed ? "bg-destructive/10" : cashedAt ? "bg-accent/10" : "bg-zinc-950/60"}`}>
+        <svg viewBox={`0 0 ${W} ${H}`} className="w-full h-32">
+          <defs>
+            <linearGradient id="crashFill" x1="0" x2="0" y1="0" y2="1">
+              <stop offset="0%" stopColor={crashed ? "hsl(0 80% 60%)" : "hsl(var(--accent))"} stopOpacity="0.45" />
+              <stop offset="100%" stopColor={crashed ? "hsl(0 80% 60%)" : "hsl(var(--accent))"} stopOpacity="0" />
+            </linearGradient>
+          </defs>
+          {history.length > 1 && (
+            <>
+              <polygon points={`0,${H} ${points} ${W},${H}`} fill="url(#crashFill)" />
+              <polyline points={points} fill="none" stroke={crashed ? "hsl(0 80% 60%)" : "hsl(var(--accent))"} strokeWidth="2" />
+            </>
+          )}
+        </svg>
+        <div className={`absolute inset-0 flex flex-col items-center justify-center pointer-events-none font-display font-black text-4xl ${crashed ? "text-destructive" : cashedAt ? "text-accent" : "text-gradient-cosmic"}`}>
+          {multi.toFixed(2)}x
+          {crashed && <span className="text-[10px] uppercase mt-1 text-destructive">Crashed</span>}
+          {cashedAt && <span className="text-[10px] uppercase mt-1 text-accent">Cashed @ {cashedAt}x</span>}
+        </div>
       </div>
+      {pastRounds.length > 0 && (
+        <div className="flex gap-1 mb-3 overflow-hidden">
+          {pastRounds.map((p, i) => (
+            <span key={i} className={`px-1.5 py-0.5 rounded text-[10px] font-mono font-bold ${p < 2 ? "bg-destructive/20 text-destructive" : p < 5 ? "bg-accent/20 text-accent" : "bg-primary/20 text-primary"}`}>{p}x</span>
+          ))}
+        </div>
+      )}
       <div className="space-y-2">
         {!active ? (
           <>
@@ -140,6 +180,87 @@ const CrashGame = ({ balance, setBalance }: { balance: number; setBalance: (n: n
           <button onClick={cashout} className="w-full py-3 bg-accent text-accent-foreground rounded-lg font-display font-bold uppercase text-base hover:opacity-90">Cash Out ${Math.floor(bet * multi)}</button>
         )}
       </div>
+    </div>
+  );
+};
+
+// ---------- Plinko ----------
+const PlinkoGame = ({ balance, setBalance }: { balance: number; setBalance: (n: number) => void }) => {
+  const ROWS = 10;
+  const SLOTS = ROWS + 1;
+  // Multipliers, slightly rigged via EDGE (0.9)
+  const baseMults = [8, 3, 1.5, 1.1, 0.7, 0.4, 0.7, 1.1, 1.5, 3, 8];
+  const mults = baseMults.map((m) => +(m * EDGE).toFixed(2));
+  const [bet, setBet] = useState(1);
+  const [pos, setPos] = useState<number | null>(null);
+  const [path, setPath] = useState<number[]>([]); // row -> column 0..row
+  const [slot, setSlot] = useState<number | null>(null);
+  const [dropping, setDropping] = useState(false);
+
+  const drop = () => {
+    if (bet <= 0 || bet > balance || dropping) return;
+    setBalance(balance - bet);
+    setDropping(true); setSlot(null);
+    const p: number[] = [0];
+    let col = 0;
+    for (let r = 1; r <= ROWS; r++) {
+      // Bias slightly to center to make extremes rare
+      const goRight = Math.random() < 0.5;
+      col += goRight ? 1 : 0;
+      p.push(col);
+    }
+    setPath(p);
+    let step = 0;
+    const id = setInterval(() => {
+      setPos(step);
+      if (step >= ROWS) {
+        clearInterval(id);
+        const finalSlot = p[ROWS];
+        setSlot(finalSlot);
+        setBalance((b: any) => b + Math.floor(bet * mults[finalSlot]));
+        setTimeout(() => { setDropping(false); setPos(null); }, 1200);
+      }
+      step++;
+    }, 110);
+  };
+
+  // ball position in pixels for current row
+  const W = 260, H = 200;
+  const ballRow = pos ?? 0;
+  const ballCol = path[Math.min(ballRow, path.length - 1)] ?? 0;
+  const ballX = ((ballCol - ballRow / 2) / (ROWS / 2)) * (W / 2 - 12) + W / 2;
+  const ballY = (ballRow / ROWS) * (H - 24) + 8;
+
+  return (
+    <div className="card-shine border border-border/60 rounded-2xl p-5">
+      <div className="flex items-center gap-2 mb-4"><Circle className="text-primary" size={20} /><h3 className="font-display font-black text-lg uppercase tracking-wider">Plinko</h3></div>
+      <div className="relative rounded-xl border border-border/60 bg-zinc-950/60 mb-3 overflow-hidden" style={{ height: H }}>
+        <svg viewBox={`0 0 ${W} ${H}`} className="w-full h-full">
+          {Array.from({ length: ROWS }).map((_, r) =>
+            Array.from({ length: r + 1 }).map((_, c) => {
+              const x = ((c - r / 2) / (ROWS / 2)) * (W / 2 - 12) + W / 2;
+              const y = (r / ROWS) * (H - 24) + 8;
+              return <circle key={`${r}-${c}`} cx={x} cy={y} r="2" fill="hsl(var(--muted-foreground))" opacity="0.5" />;
+            })
+          )}
+          {pos !== null && (
+            <circle cx={ballX} cy={ballY} r="6" fill="hsl(var(--accent))" style={{ transition: "all 0.1s linear" }} />
+          )}
+        </svg>
+      </div>
+      <div className="grid grid-cols-11 gap-0.5 mb-3">
+        {mults.map((m, i) => (
+          <div key={i} className={`text-center py-1 rounded text-[9px] font-mono font-bold ${slot === i ? "bg-accent text-accent-foreground" : m >= 2 ? "bg-primary/20 text-primary" : m >= 1 ? "bg-secondary/60 text-muted-foreground" : "bg-destructive/20 text-destructive"}`}>{m}x</div>
+        ))}
+      </div>
+      <div className="flex gap-2">
+        <input type="number" min={1} value={bet} onChange={(e) => setBet(Math.max(1, +e.target.value || 0))}
+          className="flex-1 px-3 py-2 bg-background border border-border rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-primary" />
+        <button onClick={drop} disabled={dropping || bet > balance || bet <= 0} className="px-5 py-2 bg-gradient-to-r from-primary to-accent text-primary-foreground rounded-lg font-display font-bold uppercase text-sm hover:opacity-90 disabled:opacity-40">Drop</button>
+      </div>
+      {slot !== null && !dropping && (
+        <div className="text-center text-xs font-display font-bold uppercase mt-2 text-accent">Landed {mults[slot]}x · won ${Math.floor(bet * mults[slot])}</div>
+      )}
     </div>
   );
 };
