@@ -217,7 +217,7 @@ const PlinkoGame = ({ balance, setBalance }: { balance: number; setBalance: (n: 
         clearInterval(id);
         const finalSlot = p[ROWS];
         setSlot(finalSlot);
-        setBalance((b: any) => b + Math.floor(bet * mults[finalSlot]));
+        setBalance(balance - bet + Math.floor(bet * mults[finalSlot]));
         setTimeout(() => { setDropping(false); setPos(null); }, 1200);
       }
       step++;
