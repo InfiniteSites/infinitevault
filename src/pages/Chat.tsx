@@ -74,13 +74,6 @@ const Chat = () => {
             Ask anything.
           </div>
         )}
-
-      <div ref={scrollRef} className="flex-1 overflow-y-auto card-shine border border-border/60 rounded-2xl p-4 mb-3 space-y-3 min-h-[400px]">
-        {messages.length === 0 && (
-          <div className="h-full flex items-center justify-center text-muted-foreground text-sm italic">
-            Ask anything. Powered by your Gemini API key.
-          </div>
-        )}
         {messages.map((m, i) => (
           <div key={i} className={`flex gap-3 ${m.role === "user" ? "flex-row-reverse" : ""}`}>
             <div className={`shrink-0 w-8 h-8 rounded-lg flex items-center justify-center ${m.role === "user" ? "bg-primary/20 text-primary" : "bg-accent/20 text-accent"}`}>
