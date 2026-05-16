@@ -77,6 +77,16 @@ export const api = {
   },
 
   async bumpSite() { await supabase.rpc("bump_site_visits"); },
+
+  async getAnnouncements() {
+    const { data } = await supabase.from("announcements").select("*").order("created_at", { ascending: false }).limit(200);
+    return (data ?? []) as Announcement[];
+  },
+  async addAnnouncement(author: string, message: string) {
+    await supabase.from("announcements").insert({ author, message });
+  },
+  async deleteAnnouncement(id: string) { await supabase.from("announcements").delete().eq("id", id); },
+
   async bumpLink(table: "links" | "proxies" | "dump_links", id: string) {
     await supabase.rpc("bump_link_visits", { table_name: table, row_id: id });
   },
