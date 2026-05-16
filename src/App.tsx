@@ -12,6 +12,8 @@ import Gambling from "./pages/Gambling";
 import AdminPanel from "./pages/AdminPanel";
 import Chooser from "./pages/Chooser";
 import Chat from "./pages/Chat";
+import SettingsPage from "./pages/Settings";
+import Announcements from "./pages/Announcements";
 import Index from "./pages/Index.tsx";
 import NotFound from "./pages/NotFound.tsx";
 
