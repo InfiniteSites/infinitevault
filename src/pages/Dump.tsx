@@ -2,28 +2,38 @@ import { useEffect, useState } from "react";
 import { Plus, Trash2, ExternalLink, Database, ChevronDown, ChevronRight } from "lucide-react";
 import { isAdmin } from "@/lib/admin";
 import { api, DumpRow, DumpLinkRow } from "@/lib/api";
+import { openLink } from "@/lib/openLink";
 
 const extractLinks = (text: string): string[] =>
   text.split(/[\n,]+/).map((s) => s.trim()).filter(Boolean);
 
 const DumpPage = () => {
   const [dumps, setDumps] = useState<DumpRow[]>([]);
-  const [dumpLinks, setDumpLinks] = useState<DumpLinkRow[]>([]);
   const [admin, setAdminState] = useState(isAdmin());
   const [title, setTitle] = useState("");
   const [text, setText] = useState("");
   const [open, setOpen] = useState<string | null>(null);
+  const [linksByDump, setLinksByDump] = useState<Record<string, DumpLinkRow[]>>({});
+  const [loadingDump, setLoadingDump] = useState<string | null>(null);
 
-  const load = async () => {
-    setDumps(await api.getDumps());
-    setDumpLinks(await api.getDumpLinks());
-  };
+  const load = async () => setDumps(await api.getDumps());
   useEffect(() => { load(); }, []);
   useEffect(() => {
     const h = () => setAdminState(isAdmin());
     window.addEventListener("admin-changed", h);
     return () => window.removeEventListener("admin-changed", h);
   }, []);
+
+  const toggleDump = async (id: string) => {
+    if (open === id) { setOpen(null); return; }
+    setOpen(id);
+    if (!linksByDump[id]) {
+      setLoadingDump(id);
+      const links = await api.getLinksForDump(id);
+      setLinksByDump((m) => ({ ...m, [id]: links }));
+      setLoadingDump(null);
+    }
+  };
 
   const submit = async () => {
     if (!title.trim() || !text.trim()) return;
@@ -35,7 +45,9 @@ const DumpPage = () => {
 
   const removeDump = async (id: string) => {
     if (!confirm("Delete this dump?")) return;
-    await api.deleteDump(id); load();
+    await api.deleteDump(id);
+    setLinksByDump((m) => { const n = { ...m }; delete n[id]; return n; });
+    load();
   };
 
   return (
@@ -68,15 +80,17 @@ const DumpPage = () => {
           <p className="text-center text-muted-foreground italic py-12">No dumps yet.</p>
         ) : dumps.map((d) => {
           const isOpen = open === d.id;
-          const links = dumpLinks.filter((l) => l.dump_id === d.id);
+          const links = linksByDump[d.id] ?? [];
           return (
             <div key={d.id} className="card-shine border border-border/60 rounded-xl overflow-hidden">
               <div className="flex items-center justify-between p-4">
-                <button onClick={() => setOpen(isOpen ? null : d.id)} className="flex items-center gap-3 text-left flex-1 min-w-0">
+                <button onClick={() => toggleDump(d.id)} className="flex items-center gap-3 text-left flex-1 min-w-0">
                   {isOpen ? <ChevronDown size={16} className="text-primary shrink-0" /> : <ChevronRight size={16} className="text-muted-foreground shrink-0" />}
                   <div className="min-w-0">
                     <div className="font-display font-bold truncate">{d.title}</div>
-                    <div className="text-xs text-muted-foreground">{links.length} links · {new Date(d.created_at).toLocaleDateString()}</div>
+                    <div className="text-xs text-muted-foreground">
+                      {isOpen ? `${links.length} links` : "Click to load"} · {new Date(d.created_at).toLocaleDateString()}
+                    </div>
                   </div>
                 </button>
                 {admin && (
@@ -87,11 +101,15 @@ const DumpPage = () => {
               </div>
               {isOpen && (
                 <div className="border-t border-border/60 p-3 bg-background/40 max-h-96 overflow-y-auto space-y-1">
-                  {links.map((l, i) => (
+                  {loadingDump === d.id ? (
+                    <div className="text-center text-xs text-muted-foreground py-6 italic">Loading…</div>
+                  ) : links.length === 0 ? (
+                    <div className="text-center text-xs text-muted-foreground py-6 italic">Empty</div>
+                  ) : links.map((l, i) => (
                     <div key={l.id} className="group flex items-center gap-2 p-2 rounded-lg hover:bg-secondary/60 transition">
                       <span className="text-[10px] font-mono text-muted-foreground w-8 shrink-0 text-right">{i + 1}</span>
                       <span className="font-mono text-xs truncate flex-1">{l.url}</span>
-                      <button onClick={() => { api.bumpLink("dump_links", l.id); window.open(l.url, "_blank", "noopener"); }} className="p-1 rounded text-muted-foreground hover:text-primary" title="Open">
+                      <button onClick={() => { api.bumpLink("dump_links", l.id); openLink(l.url); }} className="p-1 rounded text-muted-foreground hover:text-primary" title="Open">
                         <ExternalLink size={12} />
                       </button>
                     </div>
