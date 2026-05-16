@@ -23,17 +23,22 @@ const Generator = () => {
   }, []);
 
   const loadPool = async () => {
-    const [cats, links, prox, dumps, dumpLinks, wcs] = await Promise.all([
-      api.getCategories(), api.getLinks(), api.getProxies(), api.getDumps(), api.getDumpLinks(), api.getWildcards(),
+    // Fast first paint: get the small tables
+    const [cats, links, prox, dumps, wcs] = await Promise.all([
+      api.getCategories(), api.getLinks(), api.getProxies(), api.getDumps(), api.getWildcards(),
     ]);
-    const p: PoolPick[] = [];
     const catMap = new Map(cats.map((c) => [c.id, c.name]));
     const dumpMap = new Map(dumps.map((d) => [d.id, d.title]));
-    links.forEach((l) => p.push({ name: l.name, url: l.url, source: catMap.get(l.category_id ?? "") ?? "Misc", type: "category" }));
-    prox.forEach((l) => p.push({ name: l.name, url: l.url, source: "More Proxies", type: "proxy" }));
-    dumpLinks.forEach((l) => p.push({ name: l.url, url: l.url, source: dumpMap.get(l.dump_id) ?? "Dump", type: "dump" }));
-    setPool(p);
+    const initial: PoolPick[] = [];
+    links.forEach((l) => initial.push({ name: l.name, url: l.url, source: catMap.get(l.category_id ?? "") ?? "Misc", type: "category" }));
+    prox.forEach((l) => initial.push({ name: l.name, url: l.url, source: "More Proxies", type: "proxy" }));
+    setPool(initial);
     setWildcards(wcs);
+    // Slow: dump links in background, then merge
+    api.getDumpLinks().then((dumpLinks) => {
+      const more: PoolPick[] = dumpLinks.map((l) => ({ name: l.url, url: l.url, source: dumpMap.get(l.dump_id) ?? "Dump", type: "dump" }));
+      setPool((cur) => [...cur, ...more]);
+    });
   };
   useEffect(() => { loadPool(); }, []);
 
