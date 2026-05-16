@@ -1,12 +1,14 @@
 import { NavLink, Outlet, useLocation } from "react-router-dom";
-import { Infinity, Home, Globe, Database, Vault, ShieldCheck, Shuffle, Dice5, Settings, ListChecks, Sparkles } from "lucide-react";
+import { Infinity, Home, Globe, Database, Vault, ShieldCheck, Shuffle, Dice5, Settings as SettingsIcon, ListChecks, Sparkles, Megaphone } from "lucide-react";
 import { useEffect, useState } from "react";
 import { isAdmin, setAdmin } from "@/lib/admin";
 import { api } from "@/lib/api";
+import { getSettings, applyTabCloak } from "@/lib/openLink";
 import SpaceBackground from "@/components/SpaceBackground";
 
 const navItems = [
   { to: "/", label: "Home", icon: Home, end: true },
+  { to: "/announcements", label: "News", icon: Megaphone },
   { to: "/chooser", label: "Chooser", icon: ListChecks },
   { to: "/proxies", label: "More Proxies", icon: Globe },
   { to: "/dump", label: "Dump", icon: Database },
@@ -14,7 +16,8 @@ const navItems = [
   { to: "/gambling", label: "Gambling", icon: Dice5 },
   { to: "/vault", label: "Vault", icon: Vault },
   { to: "/chat", label: "AI", icon: Sparkles },
-  { to: "/admin", label: "Admin", icon: Settings, adminOnly: true },
+  { to: "/settings", label: "Settings", icon: SettingsIcon },
+  { to: "/admin", label: "Admin", icon: SettingsIcon, adminOnly: true },
 ];
 
 const Layout = () => {
