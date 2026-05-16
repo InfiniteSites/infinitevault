@@ -28,8 +28,9 @@ const Chooser = () => {
   const matches = (blockers: string[] | null | undefined) => {
     if (selected.size === 0) return false;
     const set = new Set(blockers ?? []);
-    for (const s of selected) if (set.has(s)) return true;
-    return false;
+    // AND logic: link must bypass ALL selected blockers
+    for (const s of selected) if (!set.has(s)) return false;
+    return true;
   };
 
   const matchedLinks = links.filter((l) => matches(l.blockers));
