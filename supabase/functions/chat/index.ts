@@ -3,33 +3,36 @@ import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors'
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders })
   try {
-    const apiKey = Deno.env.get('GEMINI_API_KEY')
+    const apiKey = Deno.env.get('LOVABLE_API_KEY')
     if (!apiKey) {
-      return new Response(JSON.stringify({ error: 'GEMINI_API_KEY not configured' }), { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
+      return new Response(JSON.stringify({ error: 'LOVABLE_API_KEY not configured' }), { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
     }
     const { messages } = await req.json()
     if (!Array.isArray(messages)) {
       return new Response(JSON.stringify({ error: 'messages array required' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
     }
-    const contents = messages.map((m: any) => ({
-      role: m.role === 'assistant' ? 'model' : 'user',
-      parts: [{ text: String(m.content ?? '') }],
-    }))
 
-    // Gemini streaming endpoint (SSE-style alt=sse)
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:streamGenerateContent?alt=sse&key=${apiKey}`
-    const upstream = await fetch(url, {
+    const upstream = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ contents }),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        model: 'google/gemini-3-flash-preview',
+        stream: true,
+        messages: messages.map((m: any) => ({ role: m.role, content: String(m.content ?? '') })),
+      }),
     })
 
     if (!upstream.ok || !upstream.body) {
       const t = await upstream.text()
-      return new Response(JSON.stringify({ error: 'Gemini error', detail: t }), { status: upstream.status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
+      const status = upstream.status === 429 ? 429 : upstream.status === 402 ? 402 : 500
+      const msg = upstream.status === 429 ? 'Rate limit, try again in a moment.' : upstream.status === 402 ? 'AI credits exhausted. Add credits in Settings.' : t
+      return new Response(JSON.stringify({ error: msg }), { status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
     }
 
-    // Pipe SSE through, transforming into simple "data: {text}\n\n" lines
+    // Transform OpenAI-style SSE chunks into { text } chunks
     const stream = new ReadableStream({
       async start(controller) {
         const reader = upstream.body!.getReader()
@@ -47,18 +50,17 @@ Deno.serve(async (req) => {
               buf = buf.slice(idx + 1)
               if (!line.startsWith('data:')) continue
               const json = line.slice(5).trim()
-              if (!json) continue
+              if (!json || json === '[DONE]') continue
               try {
                 const obj = JSON.parse(json)
-                const text = obj?.candidates?.[0]?.content?.parts?.map((p: any) => p.text).join('') ?? ''
+                const text = obj?.choices?.[0]?.delta?.content ?? ''
                 if (text) controller.enqueue(enc.encode(`data: ${JSON.stringify({ text })}\n\n`))
               } catch {}
             }
           }
           controller.enqueue(enc.encode('data: [DONE]\n\n'))
-        } catch (e) {
-          controller.error(e)
-        } finally { controller.close() }
+        } catch (e) { controller.error(e) }
+        finally { controller.close() }
       },
     })
 
