@@ -14,6 +14,27 @@ export type Database = {
   }
   public: {
     Tables: {
+      announcements: {
+        Row: {
+          author: string
+          created_at: string
+          id: string
+          message: string
+        }
+        Insert: {
+          author: string
+          created_at?: string
+          id?: string
+          message: string
+        }
+        Update: {
+          author?: string
+          created_at?: string
+          id?: string
+          message?: string
+        }
+        Relationships: []
+      }
       categories: {
         Row: {
           created_at: string
