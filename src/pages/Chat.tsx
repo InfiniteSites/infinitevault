@@ -63,10 +63,17 @@ const Chat = () => {
     <div className="container mx-auto px-4 py-8 max-w-4xl flex flex-col" style={{ minHeight: "calc(100vh - 80px)" }}>
       <div className="text-center mb-6">
         <div className="inline-flex items-center gap-2 mb-3 px-3 py-1 rounded-full bg-accent/10 border border-accent/30 text-xs font-display tracking-[0.3em] text-accent uppercase">
-          <Sparkles size={12} /> Gemini 2.0 Flash
+          <Sparkles size={12} /> Gemini 3 Flash
         </div>
         <h1 className="font-display text-4xl sm:text-5xl font-black text-gradient-cosmic tracking-tight">AI</h1>
       </div>
+
+      <div ref={scrollRef} className="flex-1 overflow-y-auto card-shine border border-border/60 rounded-2xl p-4 mb-3 space-y-3 min-h-[400px]">
+        {messages.length === 0 && (
+          <div className="h-full flex items-center justify-center text-muted-foreground text-sm italic">
+            Ask anything.
+          </div>
+        )}
 
       <div ref={scrollRef} className="flex-1 overflow-y-auto card-shine border border-border/60 rounded-2xl p-4 mb-3 space-y-3 min-h-[400px]">
         {messages.length === 0 && (
