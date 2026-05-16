@@ -35,6 +35,8 @@ const App = () => (
             <Route path="/gambling" element={<Gambling />} />
             <Route path="/vault" element={<Index />} />
             <Route path="/chat" element={<Chat />} />
+            <Route path="/announcements" element={<Announcements />} />
+            <Route path="/settings" element={<SettingsPage />} />
             <Route path="/admin" element={<AdminPanel />} />
           </Route>
           <Route path="*" element={<NotFound />} />
