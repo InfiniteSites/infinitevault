@@ -499,6 +499,7 @@ const Gambling = () => {
         <MinesGame balance={balance} setBalance={setBalance} />
         <CrashGame balance={balance} setBalance={setBalance} />
         <RouletteGame balance={balance} setBalance={setBalance} />
+        <PlinkoGame balance={balance} setBalance={setBalance} />
         <ChickenRoad balance={balance} setBalance={setBalance} />
       </div>
 
